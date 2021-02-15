@@ -321,9 +321,9 @@ The receiver:
   - if `minimum_depth` is unreasonably large:
     - MAY reject the channel.
   - if `channel_reserve_satoshis` is less than `dust_limit_satoshis` within the `open_channel` message:
-	- MUST reject the channel.
+    - MUST reject the channel.
   - if `channel_reserve_satoshis` from the `open_channel` message is less than `dust_limit_satoshis`:
-	- MUST reject the channel.
+    - MUST reject the channel.
 Other fields have the same requirements as their counterparts in `open_channel`.
 
 ### The `funding_created` Message
@@ -354,7 +354,8 @@ The sender:
 
 The recipient:
   - if `signature` is incorrect OR non-compliant with LOW-S-standard rule<sup>[LOWS](https://github.com/bitcoin/bitcoin/pull/6769)</sup>:
-    - MUST fail the channel.
+    - MUST send a `warning` and close the connection, or send an
+      `error` and fail the channel.
 
 #### Rationale
 
@@ -389,7 +390,8 @@ The sender MUST set:
 
 The recipient:
   - if `signature` is incorrect OR non-compliant with LOW-S-standard rule<sup>[LOWS](https://github.com/bitcoin/bitcoin/pull/6769)</sup>:
-    - MUST fail the channel.
+    - MUST send a `warning` and close the connection, or send an
+      `error` and fail the channel.
   - MUST NOT broadcast the funding transaction before receipt of a valid `funding_signed`.
   - on receipt of a valid `funding_signed`:
     - SHOULD broadcast the funding transaction.
@@ -427,7 +429,7 @@ A non-funding node (fundee):
 funding transaction after a reasonable timeout.
 
 From the point of waiting for `funding_locked` onward, either node MAY
-fail the channel if it does not receive a required response from the
+send an `error` and fail the channel if it does not receive a required response from the
 other node after a reasonable timeout.
 
 #### Rationale
@@ -482,7 +484,7 @@ A sending node:
     - MUST NOT send a `shutdown`.
   - MUST NOT send an `update_add_htlc` after a `shutdown`.
   - if no HTLCs remain in either commitment transaction:
-	- MUST NOT send any `update` message after a `shutdown`.
+    - MUST NOT send any `update` message after a `shutdown`.
   - SHOULD fail to route any HTLC added after it has sent `shutdown`.
   - if it sent a non-zero-length `shutdown_scriptpubkey` in `open_channel` or `accept_channel`:
     - MUST send the same value in `scriptpubkey`.
@@ -496,14 +498,15 @@ A sending node:
 
 A receiving node:
   - if it hasn't received a `funding_signed` (if it is a funder) or a `funding_created` (if it is a fundee):
-    - SHOULD fail the connection
+    - SHOULD send a `warning`.
   - if the `scriptpubkey` is not in one of the above forms:
-    - SHOULD fail the connection.
+    - SHOULD send a `warning`.
   - if it hasn't sent a `funding_locked` yet:
     - MAY reply to a `shutdown` message with a `shutdown`
   - once there are no outstanding updates on the peer, UNLESS it has already sent a `shutdown`:
     - MUST reply to a `shutdown` message with a `shutdown`
   - if both nodes advertised the `option_upfront_shutdown_script` feature, and the receiving node received a non-zero-length `shutdown_scriptpubkey` in `open_channel` or `accept_channel`, and that `shutdown_scriptpubkey` is not equal to `scriptpubkey`:
+    - MAY send a `warning`.
     - MUST fail the connection.
 
 #### Rationale
@@ -565,18 +568,21 @@ The sending node:
 The receiving node:
   - if the `signature` is not valid for either variant of closing transaction
   specified in [BOLT #3](03-transactions.md#closing-transaction) OR non-compliant with LOW-S-standard rule<sup>[LOWS](https://github.com/bitcoin/bitcoin/pull/6769)</sup>:
-    - MUST fail the connection.
+    - MUST send a `warning` and close the connection, or send an
+      `error` and fail the channel.
   - if `fee_satoshis` is equal to its previously sent `fee_satoshis`:
     - SHOULD sign and broadcast the final closing transaction.
     - MAY close the connection.
   - otherwise, if `fee_satoshis` is greater than
 the base fee of the final commitment transaction as calculated in
 [BOLT #3](03-transactions.md#fee-calculation):
-    - MUST fail the connection.
+    - MUST send a `warning` and close the connection, or send an
+      `error` and fail the channel.
   - if `fee_satoshis` is not strictly
 between its last-sent `fee_satoshis` and its previously-received
 `fee_satoshis`, UNLESS it has since reconnected:
-    - SHOULD fail the connection.
+    - SHOULD send a `warning` and close the connection, or send an
+      `error` and fail the channel.
   - if the receiver agrees with the fee:
     - SHOULD reply with a `closing_signed` with the same `fee_satoshis` value.
   - otherwise:
@@ -776,6 +782,7 @@ An offering node:
   - MUST NOT offer an HTLC with a timeout deadline before its `cltv_expiry`.
   - if an HTLC which it offered is in either node's current
   commitment transaction, AND is past this timeout deadline:
+    - SHOULD send an `error` to the receiving peer (if connected).
     - MUST fail the channel.
 
 A fulfilling node:
@@ -784,6 +791,7 @@ A fulfilling node:
   - MUST fail (and not forward) an HTLC whose fulfillment deadline is already past.
   - if an HTLC it has fulfilled is in either node's current commitment
   transaction, AND is past this fulfillment deadline:
+    - SHOULD send an `error` to the offering peer (if connected).
     - MUST fail the channel.
 
 ### Adding an HTLC: `update_add_htlc`
@@ -849,21 +857,27 @@ been received). It MUST continue incrementing instead.
 
 A receiving node:
   - receiving an `amount_msat` equal to 0, OR less than its own `htlc_minimum_msat`:
-    - SHOULD fail the channel.
+    - SHOULD send a `warning` and close the connection, or send an
+      `error` and fail the channel.
   - receiving an `amount_msat` that the sending node cannot afford at the current `feerate_per_kw` (while maintaining its channel reserve and any `to_local_anchor` and `to_remote_anchor` costs):
-    - SHOULD fail the channel.
+    - SHOULD send a `warning` and close the connection, or send an
+      `error` and fail the channel.
   - if a sending node adds more than receiver `max_accepted_htlcs` HTLCs to
     its local commitment transaction, OR adds more than receiver `max_htlc_value_in_flight_msat` worth of offered HTLCs to its local commitment transaction:
-    - SHOULD fail the channel.
+    - MUST send a `warning` and close the connection, or send an
+      `error` and fail the channel.
   - if sending node sets `cltv_expiry` to greater or equal to 500000000:
-    - SHOULD fail the channel.
+    - MUST send a `warning` and close the connection, or send an
+      `error` and fail the channel.
   - for channels with `chain_hash` identifying the Bitcoin blockchain, if the four most significant bytes of `amount_msat` are not 0:
-    - MUST fail the channel.
+    - MUST send a `warning` and close the connection, or send an
+      `error` and fail the channel.
   - MUST allow multiple HTLCs with the same `payment_hash`.
   - if the sender did not previously acknowledge the commitment of that HTLC:
     - MUST ignore a repeated `id` value after a reconnection.
   - if other `id` violations occur:
-    - MAY fail the channel.
+    - MAY send a `warning` and close the connection, or send an
+      `error` and fail the channel.
 
 The `onion_routing_packet` contains an obfuscated list of hops and instructions for each hop along the path.
 It commits to the HTLC by setting the `payment_hash` as associated data, i.e. includes the `payment_hash` in the computation of HMACs.
@@ -953,13 +967,16 @@ A node:
 
 A receiving node:
   - if the `id` does not correspond to an HTLC in its current commitment transaction:
-    - MUST fail the channel.
+    - MUST send a `warning` and close the connection, or send an
+      `error` and fail the channel.
   - if the `payment_preimage` value in `update_fulfill_htlc`
   doesn't SHA256 hash to the corresponding HTLC `payment_hash`:
-    - MUST fail the channel.
+    - MUST send a `warning` and close the connection, or send an
+      `error` and fail the channel.
   - if the `BADONION` bit in `failure_code` is not set for
   `update_fail_malformed_htlc`:
-    - MUST fail the channel.
+    - MUST send a `warning` and close the connection, or send an
+      `error` and fail the channel.
   - if the `sha256_of_onion` in `update_fail_malformed_htlc` doesn't match the
   onion it sent:
     - MAY retry or choose an alternate error response.
@@ -1018,12 +1035,15 @@ fee changes).
 A receiving node:
   - once all pending updates are applied:
     - if `signature` is not valid for its local commitment transaction OR non-compliant with LOW-S-standard rule <sup>[LOWS](https://github.com/bitcoin/bitcoin/pull/6769)</sup>:
-      - MUST fail the channel.
+      - MUST send a `warning` and close the connection, or send an
+        `error` and fail the channel.
     - if `num_htlcs` is not equal to the number of HTLC outputs in the local
     commitment transaction:
-      - MUST fail the channel.
+      - MUST send a `warning` and close the connection, or send an
+        `error` and fail the channel.
   - if any `htlc_signature` is not valid for the corresponding HTLC transaction OR non-compliant with LOW-S-standard rule <sup>[LOWS](https://github.com/bitcoin/bitcoin/pull/6769)</sup>:
-    - MUST fail the channel.
+    - MUST send a `warning` and close the connection, or send an
+      `error` and fail the channel.
   - MUST respond with a `revoke_and_ack` message.
 
 #### Rationale
@@ -1073,9 +1093,10 @@ A sending node:
 
 A receiving node:
   - if `per_commitment_secret` does not generate the previous `per_commitment_point`:
-    - MUST fail the channel.
+    - MUST send an `error` and fail the channel.
   - if the `per_commitment_secret` was not generated by the protocol in [BOLT #3](03-transactions.md#per-commitment-secret-requirements):
-    - MAY fail the channel.
+    - MAY send a `warning` and close the connection, or send an
+      `error` and fail the channel.
 
 A node:
   - MUST NOT broadcast old (revoked) commitment transactions,
@@ -1117,12 +1138,15 @@ The node _not responsible_ for paying the Bitcoin fee:
 
 A receiving node:
   - if the `update_fee` is too low for timely processing, OR is unreasonably large:
-    - SHOULD fail the channel.
+    - MUST send a `warning` and close the connection, or send an
+      `error` and fail the channel.
   - if the sender is not responsible for paying the Bitcoin fee:
-    - MUST fail the channel.
+    - MUST send a `warning` and close the connection, or send an
+      `error` and fail the channel.
   - if the sender cannot afford the new fee rate on the receiving node's
   current commitment transaction:
-    - SHOULD fail the channel,
+    - SHOULD send a `warning` and close the connection, or send an
+      `error` and fail the channel.
       - but MAY delay this check until the `update_fee` is committed.
 
 #### Rationale
@@ -1248,10 +1272,10 @@ A node:
     - if `next_commitment_number` is not 1 greater than the
   commitment number of the last `commitment_signed` message the receiving
   node has sent:
-      - SHOULD fail the channel.
+      - SHOULD send an `error` and fail the channel.
     - if it has not sent `commitment_signed`, AND `next_commitment_number`
     is not equal to 1:
-      - SHOULD fail the channel.
+      - SHOULD send an `error` and fail the channel.
   - if `next_revocation_number` is equal to the commitment number of
   the last `revoke_and_ack` the receiving node sent, AND the receiving node
   hasn't already received a `closing_signed`:
@@ -1263,10 +1287,10 @@ A node:
   - otherwise:
     - if `next_revocation_number` is not equal to 1 greater than the
     commitment number of the last `revoke_and_ack` the receiving node has sent:
-      - SHOULD fail the channel.
+      - SHOULD send an `error` and fail the channel.
     - if it has not sent `revoke_and_ack`, AND `next_revocation_number`
     is not equal to 0:
-      - SHOULD fail the channel.
+      - SHOULD send an `error` and fail the channel.
 
  A receiving node:
   - if `option_static_remotekey` applies to the commitment transaction:
@@ -1277,7 +1301,7 @@ A node:
       - SHOULD fail the channel.
     - otherwise:
       - if `your_last_per_commitment_secret` does not match the expected values:
-        - SHOULD fail the channel.
+        - SHOULD send an `error` and fail the channel.
   - otherwise, if it supports `option_data_loss_protect`:
     - if `next_revocation_number` is greater than expected above, AND
     `your_last_per_commitment_secret` is correct for that
@@ -1288,7 +1312,7 @@ A node:
         should the sending node broadcast its commitment transaction on-chain.
     - otherwise (`your_last_per_commitment_secret` or `my_current_per_commitment_point`
     do not match the expected values):
-      - SHOULD fail the channel.
+      - SHOULD send an `error` and fail the channel.
 
 A node:
   - MUST NOT assume that previously-transmitted messages were lost,

@@ -475,7 +475,8 @@ contribute to fees.
 
 A node:
   - if the resulting fee rate is too low:
-    - MAY fail the channel.
+    - MAY send a `warning` and close the connection, or send an
+      `error` and fail the channel.
 
 ## Commitment Transaction Construction
 
@@ -1964,4 +1965,3 @@ before subtraction of:
 ![Creative Commons License](https://i.creativecommons.org/l/by/4.0/88x31.png "License CC-BY")
 <br>
 This work is licensed under a [Creative Commons Attribution 4.0 International License](http://creativecommons.org/licenses/by/4.0/).
-

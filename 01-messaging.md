@@ -17,7 +17,7 @@ All data fields are unsigned big-endian unless otherwise specified.
   * [Fundamental Types](#fundamental-types)
   * [Setup Messages](#setup-messages)
     * [The `init` Message](#the-init-message)
-    * [The `error` Message](#the-error-message)
+    * [The `error` and `warning` Messages](#the-error-and-warning-messages)
   * [Control Messages](#control-messages)
     * [The `ping` and `pong` Messages](#the-ping-and-pong-messages)
   * [Appendix A: BigSize Test Vectors](#appendix-a-bigsize-test-vectors)
@@ -279,11 +279,11 @@ The receiving node:
   - upon receiving unknown _odd_ feature bits that are non-zero:
     - MUST ignore the bit.
   - upon receiving unknown _even_ feature bits that are non-zero:
-    - MUST fail the connection.
+    - MUST close the connection.
   - upon receiving `networks` containing no common chains
-    - MAY fail the connection.
+    - MAY close the connection.
   - if the feature vector does not set all known, transitive dependencies:
-    - MUST fail the connection.
+    - MUST close the connection.
 
 #### Rationale
 
@@ -300,7 +300,7 @@ support a single network, the `networks` fields avoids nodes
 erroneously believing they will receive updates about their preferred
 network, or that they can open channels.
 
-### The `error` Message
+### The `error` and `warning` Messages
 
 For simplicity of diagnosis, it's often useful to tell a peer that something is incorrect.
 
@@ -310,11 +310,13 @@ For simplicity of diagnosis, it's often useful to tell a peer that something is 
    * [`u16`:`len`]
    * [`len*byte`:`data`]
 
-The 2-byte `len` field indicates the number of bytes in the immediately following field.
+1. type: 1 (`warning`)
+2. data:
+   * [`channel_id`:`channel_id`]
+   * [`u16`:`len`]
+   * [`len*byte`:`data`]
 
 #### Requirements
-
-The channel is referred to by `channel_id`, unless `channel_id` is 0 (i.e. all bytes are 0), in which case it refers to all channels.
 
 The funding node:
   - for all error messages sent before (and including) the `funding_created` message:
@@ -325,24 +327,27 @@ The fundee node:
     - MUST use `temporary_channel_id` in lieu of `channel_id`.
 
 A sending node:
-  - when sending `error`:
-    - MUST fail the channel referred to by the error message.
   - SHOULD send `error` for protocol violations or internal errors that make channels unusable or that make further communication unusable.
   - SHOULD send `error` with the unknown `channel_id` in reply to messages of type `32`-`255` related to unknown channels.
+  - when sending `error`:
+    - MUST fail the channel referred to by the error message.
+  - when sending `warning`:
+	- MAY set `channel_id` to all zero if the warning is not related to a specific channel.
+  - MAY close the connection after sending.
   - MAY send an empty `data` field.
   - when failure was caused by an invalid signature check:
     - SHOULD include the raw, hex-encoded transaction in reply to a `funding_created`, `funding_signed`, `closing_signed`, or `commitment_signed` message.
-  - when `channel_id` is 0:
-    - MUST fail all channels with the receiving node.
-    - MUST close the connection.
-  - MUST set `len` equal to the length of `data`.
 
 The receiving node:
   - upon receiving `error`:
-    - MUST fail the channel referred to by the error message, if that channel is with the sending node.
-  - if no existing channel is referred to by the message:
+    - MUST fail the channel referred to by `channel_id`, if that channel is with the sending node.
+  - upon receiving `warning`:
+    - SHOULD log the message for later diagnosis.
+	- MAY disconnect.
+	- MAY reconnect after some delay to retry.
+	- MAY attempt `shutdown` if permitted at this point.
+  - if no existing channel is referred to by `channel_id`:
     - MUST ignore the message.
-  - MUST truncate `len` to the remainder of the packet (if it's larger).
   - if `data` is not composed solely of printable ASCII characters (For reference: the printable character set includes byte values 32 through 126, inclusive):
     - SHOULD NOT print out `data` verbatim.
 
@@ -352,6 +357,11 @@ There are unrecoverable errors that require an abort of conversations;
 if the connection is simply dropped, then the peer may retry the
 connection. It's also useful to describe protocol violations for
 diagnosis, as this indicates that one peer has a bug.
+
+On the other hand, overuse of error messages has lead to
+implementations ignoring them (to avoid an otherwise expensive channel
+break), so the "warning" message was added to allow some degree of
+retry or recovery for spurious errors.
 
 It may be wise not to distinguish errors in production settings, lest
 it leak information — hence, the optional `data` field.
@@ -388,7 +398,7 @@ A node sending a `ping` message:
   - MUST NOT set `ignored` to sensitive data such as secrets or portions of initialized
 memory.
   - if it doesn't receive a corresponding `pong`:
-    - MAY terminate the network connection,
+    - MAY close the network connection,
       - and MUST NOT fail the channels in this case.
   - SHOULD NOT send `ping` messages more often than once every 30 seconds.
 
@@ -398,7 +408,7 @@ A node sending a `pong` message:
  memory.
 
 A node receiving a `ping` message:
-  - SHOULD fail the channels if it has received significantly in excess of one `ping` per 30 seconds.
+  - SHOULD close the connection if it has received significantly in excess of one `ping` per 30 seconds.
   - if `num_pong_bytes` is less than 65532:
     - MUST respond by sending a `pong` message, with `byteslen` equal to `num_pong_bytes`.
   - otherwise (`num_pong_bytes` is **not** less than 65532):
@@ -406,7 +416,7 @@ A node receiving a `ping` message:
 
 A node receiving a `pong` message:
   - if `byteslen` does not correspond to any `ping`'s `num_pong_bytes` value it has sent:
-    - MAY fail the channels.
+    - MAY close the connection.
 
 ### Rationale
 
