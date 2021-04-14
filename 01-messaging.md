@@ -258,9 +258,19 @@ The `features` field MUST be padded to bytes with 0s.
     1. type: 1 (`networks`)
     2. data:
         * [`...*chain_hash`:`chains`]
-
+    1. type: 3 (`compression_algorithms`)
+    2. data:
+        * [`...*byte`:`supported_algorithms`]
 
 The optional `networks` indicates the chains the node is interested in.
+
+The optional `compression_algorithms` is a bitfield indicating what compression
+algorithms the node supports for [gossip queries](07-routing-gossip.md#query-messages).
+
+| Bit Position  | Algorithm                                            |
+| ------------- | ---------------------------------------------------- |
+| 0             | Uncompressed                                         |
+| 1             | [zlib_deflate](https://www.ietf.org/rfc/rfc1950.txt) |
 
 #### Requirements
 
@@ -271,6 +281,8 @@ The sending node:
   - SHOULD NOT set features greater than 13 in `globalfeatures`.
   - SHOULD use the minimum length required to represent the `features` field.
   - SHOULD set `networks` to all chains it will gossip or open channels for.
+  - if it sets the `option_compression` feature bit:
+    - MUST set the `compression_algorithms` field
 
 The receiving node:
   - MUST wait to receive `init` before sending any other messages.
@@ -284,6 +296,9 @@ The receiving node:
     - MAY fail the connection.
   - if the feature vector does not set all known, transitive dependencies:
     - MUST fail the connection.
+  - if it has no `compression_algorithms` in common with the sending node:
+    - MUST NOT exchange messages that require compression (e.g. gossip queries).
+    - MAY fail the connection.
 
 #### Rationale
 
@@ -453,6 +468,7 @@ multi-byte values with big-endian.
 Values encoded with BigSize will produce an encoding of either 1, 3, 5, or 9
 bytes depending on the size of the integer. The encoding is a piece-wise
 function that takes a `uint64` value `x` and produces:
+
 ```
         uint8(x)                if x < 0xfd
         0xfd + be16(uint16(x))  if x < 0x10000
@@ -471,6 +487,7 @@ decoded with BigSize should be checked to ensure they are minimally encoded.
 ### BigSize Decoding Tests
 
 The following is an example of how to execute the BigSize decoding tests.
+
 ```golang
 func testReadBigSize(t *testing.T, test bigSizeTest) {
         var buf [8]byte 
@@ -493,6 +510,7 @@ func testReadBigSize(t *testing.T, test bigSizeTest) {
 ```
 
 A correct implementation should pass against these test vectors:
+
 ```json
 [
     {
@@ -601,6 +619,7 @@ A correct implementation should pass against these test vectors:
 ### BigSize Encoding Tests
 
 The following is an example of how to execute the BigSize encoding tests.
+
 ```golang
 func testWriteBigSize(t *testing.T, test bigSizeTest) {
         var (
@@ -621,6 +640,7 @@ func testWriteBigSize(t *testing.T, test bigSizeTest) {
 ```
 
 A correct implementation should pass against the following test vectors:
+
 ```json
 [
     {
