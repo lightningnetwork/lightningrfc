@@ -13,6 +13,7 @@ operation, and closing.
       * [The `funding_created` Message](#the-funding_created-message)
       * [The `funding_signed` Message](#the-funding_signed-message)
       * [The `funding_locked` Message](#the-funding_locked-message)
+    * [Channel Quiescence](#channel-quiescence)
     * [Channel Close](#channel-close)
       * [Closing Initiation: `shutdown`](#closing-initiation-shutdown)
       * [Closing Negotiation: `closing_signed`](#closing-negotiation-closing_signed)
@@ -25,6 +26,7 @@ operation, and closing.
       * [Completing the Transition to the Updated State: `revoke_and_ack`](#completing-the-transition-to-the-updated-state-revoke_and_ack)
       * [Updating Fees: `update_fee`](#updating-fees-update_fee)
     * [Message Retransmission: `channel_reestablish` message](#message-retransmission)
+      * [Upgrading Channels](#upgrading-channels)
   * [Authors](#authors)
 
 # Channel
@@ -444,6 +446,57 @@ If the fundee forgets the channel before it was confirmed, the funder will need
 to broadcast the commitment transaction to get his funds back and open a new
 channel. To avoid this, the funder should ensure the funding transaction
 confirms in the next 2016 blocks.
+
+## Channel Quiescence
+
+Various fundamental changes, in particular protocol upgrades, are
+easiest on channels where both commitment transactions match, and no
+pending updates are in flight.  We define a protocol to quiesce the
+channel by indicating that "SomeThing Fundamental is Underway".
+
+### `stfu`
+
+1. type: 2 (`stfu`)
+2. data:
+    * [`channel_id`:`channel_id`]
+	* [`u8`:`initiator`]
+
+### Requirements
+
+The sender of `stfu`:
+  - MUST NOT send `stfu` if any of the sender's htlc additions, htlc removals
+    or fee updates are pending for either peer.
+  - MUST NOT send `stfu` twice.
+  - if it is replying to an `stfu`:
+	- MUST set `initiator` to 0
+  - otherwise:
+	- MUST set `initiator` to 1
+  - MUST set `channel_id` to the id of the channel to quiesce.
+  - MUST now consider the channel to be quiescing.
+  - MUST NOT send an update message after `stfu`.
+
+The receiver of `stfu`:
+  - if it has sent `stfu` then:
+    - MUST now consider the channel to be quiescent
+  - otherwise:
+    - SHOULD NOT send any more update messages.
+    - MUST reply with `stfu` once it can do so.
+
+Upon disconnection:
+  - the channel is no longer considered quiescent.
+
+### Rationale
+
+The normal use would be to cease sending updates, then wait for all
+the current updates to be acknowledged by both peers, then start
+quiescence.  For some protocols, choosing the initiator matters,
+so this flag is sent.
+
+If both sides send `stfu` simultaneously, they will both set
+`initiator` to `1`, in which case the "initiator" is arbitrarily
+considered to be the channel funder (the sender of `open_channel`).
+The quiescence effect is exactly the same as if one had replied to the
+other.
 
 ## Channel Close
 
@@ -1184,12 +1237,36 @@ messages are), they are independent of requirements here.
    * [`u64`:`next_revocation_number`]
    * [`32*byte`:`your_last_per_commitment_secret`]
    * [`point`:`my_current_per_commitment_point`]
+   * [`channel_reestablish_tlvs`:`tlvs`]
+
+1. `tlv_stream`: `channel_reestablish_tlvs`
+2. types:
+    1. type: 1 (`next_to_send`)
+    2. data:
+        * [`tu64`:`commitment_number`]
+    1. type: 3 (`desired_type`)
+    2. data:
+        * [`channel_type`:`type`]
+    1. type: 5 (`current_type`)
+    2. data:
+        * [`channel_type`:`type`]
+    1. type: 7 (`upgradable`)
+    2. data:
+        * [`...*channel_type`:`upgrades`]
+
+1. subtype: `channel_type`
+2. data:
+    * [`u16`:`len`]
+    * [`len*byte`:`features`]
 
 `next_commitment_number`: A commitment number is a 48-bit
 incrementing counter for each commitment transaction; counters
 are independent for each peer in the channel and start at 0.
 They're only explicitly relayed to the other node in the case of
 re-establishment, otherwise they are implicit.
+
+See [Upgrading Channels](#upgrading-channels) for the requirements
+of some of the optional fields.
 
 ### Requirements
 
@@ -1387,6 +1464,85 @@ however), but the disclosure of previous secret still allows
 fall-behind detection.  An implementation can offer both, however, and
 fall back to the `option_data_loss_protect` behavior if
 `option_static_remotekey` is not negotiated.
+
+### Upgrading Channels
+
+Upgrading channels (e.g. enabling `option_static_remotekey` for a
+channel where it was not negotiated originally) is possible at
+reconnection time if both implementations support it.
+
+For simplicity, upgrades are proposed by the original initiator of the
+channel, and can only occur on channels with no pending updates and no
+retransmissions on reconnection.  This can be achieved explicitly
+using the [quiescence protocol](#channel-quiescence).
+
+In case of disconnection where one peer doesn't receive
+`channel_reestablish` it's possible that one peer will consider the
+channel upgraded and the other not.  But this will eventually be
+resolved: the channel cannot progress until both sides have received
+`channel_reestablish` anyway.
+
+Channel features are explicitly enumerated as `channel_type`
+bitfields, using odd features bits.  The currently defined types are:
+  - no features (no bits set)
+  - `option_static_remotekey` (bit 13)
+  - `option_anchor_outputs` and `option_static_remotekey` (bits 21 and 13)
+  - `option_anchors_zero_fee_htlc_tx` and `option_static_remotekey` (bits 23 and 13)
+
+#### Requirements
+
+A node sending `channel_reestablish`, if it supports upgrading channels:
+  - MUST set `next_to_send` the commitment number of the next `commitment_signed` it expects to send.
+  - if it initiated the channel:
+    - MUST set `desired_type` to the channel_type it wants for the channel.
+  - otherwise:
+    - MUST set `current_type` to the current channel_type of the channel.
+    - MUST set `upgradable` to the channel types it could change to.
+    - MAY not set `upgradable` if it would be empty.
+
+A node receiving `channel_reestablish`:
+  - if it has to retransmit `commitment_signed` or `revoke_and_ack`:
+    - MUST consider the channel feature change failed.
+  - if `next_to_send` is missing, or not equal to the `next_commitment_number` it sent:
+    - MUST consider the channel feature change failed.
+  - if updates are pending on either sides' commitment transaction:
+    - MUST consider the channel feature change failed.
+  - otherwise:
+    - if `desired_type` matches `current_type` or any `upgradable` `upgrades`:
+      - MUST consider the channel type to be `desired_type`.
+    - otherwise:
+      - MUST consider the channel feature change failed.
+      - if there is a `current_type` field:
+        - MUST consider the channel type to be `current_type`.
+
+#### Rationale
+
+The new `next_to_send` counter is needed to indicate that the peer
+sent a new set of updates and `commitment_signed` which we didn't see
+before disconnection (i.e. retransmissions are incoming).  Existing logic
+already tells us if we need to send retransmissions.
+
+If reconnection is aborted, there are four possibilities: both side
+receive the `channel_reestablish` and are upgraded, neither side
+receives the `channel_reestablish` and neither are upgraded, and the
+two cases where one side is upgraded and the other is not.  Note that
+this is fine as long as it is resolved before any channel operations
+are attempted (all of which require successful exchange of
+`channel_reestablish` messages).
+
+On reconnect, if only the initiator is upgraded, it will reflect this
+upgrade in the next `desired_type`, causing the non-initiator to
+upgrade.  If only the non-initiator is upgraded, it will be reflected
+in `current_type` and the initiator will consider itself upgraded.
+
+There can be desynchronization across multiple upgrades.  Both nodes
+start on channel_type A, initiator sets `desired_type` B, receives
+`channel_reestablish` from A which has B in `upgradable`, but B
+doesn't receive `channel_reestablish`.  On reconnect, initiator tries
+to upgrade again, setting `desired_type` to C, which is not in B's
+`upgradable` so fails.  This is why, on such a failed upgrade, the
+initiator considers the `current_type` given by the non-initiator to
+be canonical.
 
 # Authors
 
