@@ -1,0 +1,527 @@
+[
+    {
+	"comment": "If a period starts at 10:00:00 (am) UTC on 31 December, 1970",
+	"basetime": 31485600,
+	"time_unit": 0,
+	"period": 1,
+	"n": 1,
+	"expect": {
+	    "timestring": "31 Dec 1970 10:00:01 UTC",
+	    "seconds_since_epoch": 31485601
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 0,
+	"period": 10,
+	"n": 1,
+	"expect": {
+	    "timestring": "31 Dec 1970 10:00:10 UTC",
+	    "seconds_since_epoch": 31485610
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 0,
+	"period": 100,
+	"n": 1,
+	"expect": {
+	    "timestring": "31 Dec 1970 10:01:40 UTC",
+	    "seconds_since_epoch": 31485700
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 0,
+	"period": 1000,
+	"n": 1,
+	"expect": {
+	    "timestring": "31 Dec 1970 10:16:40 UTC",
+	    "seconds_since_epoch": 31486600
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 1,
+	"period": 1,
+	"n": 1,
+	"expect": {
+	    "timestring": "1 Jan 1971 10:00:00 UTC",
+	    "seconds_since_epoch": 31572000
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 1,
+	"period": 10,
+	"n": 1,
+	"expect": {
+	    "timestring": "10 Jan 1971 10:00:00 UTC",
+	    "seconds_since_epoch": 32349600
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 1,
+	"period": 100,
+	"n": 1,
+	"expect": {
+	    "timestring": "10 Apr 1971 10:00:00 UTC",
+	    "seconds_since_epoch": 40125600
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 1,
+	"period": 1000,
+	"n": 1,
+	"expect": {
+	    "timestring": "26 Sep 1973 10:00:00 UTC",
+	    "seconds_since_epoch": 117885600
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 2,
+	"period": 1,
+	"n": 1,
+	"expect": {
+	    "timestring": "31 Jan 1971 10:00:00 UTC",
+	    "seconds_since_epoch": 34164000
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 2,
+	"period": 10,
+	"n": 1,
+	"expect": {
+	    "timestring": "31 Oct 1971 10:00:00 UTC",
+	    "seconds_since_epoch": 57751200
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 2,
+	"period": 100,
+	"n": 1,
+	"expect": {
+	    "timestring": "30 Apr 1979 10:00:00 UTC",
+	    "seconds_since_epoch": 294314400
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 3,
+	"period": 1,
+	"n": 1,
+	"expect": {
+	    "timestring": "31 Dec 1971 10:00:00 UTC",
+	    "seconds_since_epoch": 63021600
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 3,
+	"period": 10,
+	"n": 1,
+	"expect": {
+	    "timestring": "31 Dec 1980 10:00:00 UTC",
+	    "seconds_since_epoch": 347104800
+	}
+    },
+    {
+	"comment": "If a period starts at 10:00:00 (am) UTC on 29 February, 2016",
+	"basetime": 1456740000,
+	"time_unit": 0,
+	"period": 1,
+	"n": 1,
+	"expect": {
+	    "timestring": "29 Feb 2016 10:00:01 UTC",
+	    "seconds_since_epoch": 1456740001
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 0,
+	"period": 10,
+	"n": 1,
+	"expect": {
+	    "timestring": "29 Feb 2016 10:00:10 UTC",
+	    "seconds_since_epoch": 1456740010
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 0,
+	"period": 100,
+	"n": 1,
+	"expect": {
+	    "timestring": "29 Feb 2016 10:01:40 UTC",
+	    "seconds_since_epoch": 1456740100
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 0,
+	"period": 1000,
+	"n": 1,
+	"expect": {
+	    "timestring": "29 Feb 2016 10:16:40 UTC",
+	    "seconds_since_epoch": 1456741000
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 1,
+	"period": 1,
+	"n": 1,
+	"expect": {
+	    "timestring": "1 Mar 2016 10:00:00 UTC",
+	    "seconds_since_epoch": 1456826400
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 1,
+	"period": 10,
+	"n": 1,
+	"expect": {
+	    "timestring": "10 Mar 2016 10:00:00 UTC",
+	    "seconds_since_epoch": 1457604000
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 1,
+	"period": 100,
+	"n": 1,
+	"expect": {
+	    "timestring": "08 Jun 2016 10:00:00 UTC",
+	    "seconds_since_epoch": 1465380000
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 1,
+	"period": 1000,
+	"n": 1,
+	"expect": {
+	    "timestring": "25 Nov 2018 10:00:00 UTC",
+	    "seconds_since_epoch": 1543140000
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 2,
+	"period": 1,
+	"n": 1,
+	"expect": {
+	    "timestring": "29 Mar 2016 10:00:00 UTC",
+	    "seconds_since_epoch": 1459245600
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 2,
+	"period": 10,
+	"n": 1,
+	"expect": {
+	    "timestring": "29 Dec 2016 10:00:00 UTC",
+	    "seconds_since_epoch": 1483005600
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 2,
+	"period": 100,
+	"n": 1,
+	"expect": {
+	    "timestring": "29 Jun 2024 10:00:00 UTC",
+	    "seconds_since_epoch": 1719655200
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 3,
+	"period": 1,
+	"n": 1,
+	"expect": {
+	    "timestring": "28 Feb 2017 10:00:00 UTC",
+	    "seconds_since_epoch": 1488276000
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 3,
+	"period": 10,
+	"n": 1,
+	"expect": {
+	    "timestring": "28 Feb 2026 10:00:00 UTC",
+	    "seconds_since_epoch": 1772272800
+	}
+    },
+
+    {
+	"comment": "period and n are actually substitutable!",
+	"basetime": 31485600,
+	"time_unit": 0,
+	"n": 1,
+	"period": 1,
+	"expect": {
+	    "timestring": "31 Dec 1970 10:00:01 UTC",
+	    "seconds_since_epoch": 31485601
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 0,
+	"n": 10,
+	"period": 1,
+	"expect": {
+	    "timestring": "31 Dec 1970 10:00:10 UTC",
+	    "seconds_since_epoch": 31485610
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 0,
+	"n": 100,
+	"period": 1,
+	"expect": {
+	    "timestring": "31 Dec 1970 10:01:40 UTC",
+	    "seconds_since_epoch": 31485700
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 0,
+	"n": 1000,
+	"period": 1,
+	"expect": {
+	    "timestring": "31 Dec 1970 10:16:40 UTC",
+	    "seconds_since_epoch": 31486600
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 1,
+	"n": 1,
+	"period": 1,
+	"expect": {
+	    "timestring": "1 Jan 1971 10:00:00 UTC",
+	    "seconds_since_epoch": 31572000
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 1,
+	"n": 10,
+	"period": 1,
+	"expect": {
+	    "timestring": "10 Jan 1971 10:00:00 UTC",
+	    "seconds_since_epoch": 32349600
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 1,
+	"n": 100,
+	"period": 1,
+	"expect": {
+	    "timestring": "10 Apr 1971 10:00:00 UTC",
+	    "seconds_since_epoch": 40125600
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 1,
+	"n": 1000,
+	"period": 1,
+	"expect": {
+	    "timestring": "26 Sep 1973 10:00:00 UTC",
+	    "seconds_since_epoch": 117885600
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 2,
+	"n": 1,
+	"period": 1,
+	"expect": {
+	    "timestring": "31 Jan 1971 10:00:00 UTC",
+	    "seconds_since_epoch": 34164000
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 2,
+	"n": 10,
+	"period": 1,
+	"expect": {
+	    "timestring": "31 Oct 1971 10:00:00 UTC",
+	    "seconds_since_epoch": 57751200
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 2,
+	"n": 100,
+	"period": 1,
+	"expect": {
+	    "timestring": "30 Apr 1979 10:00:00 UTC",
+	    "seconds_since_epoch": 294314400
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 3,
+	"n": 1,
+	"period": 1,
+	"expect": {
+	    "timestring": "31 Dec 1971 10:00:00 UTC",
+	    "seconds_since_epoch": 63021600
+	}
+    },
+    {
+	"basetime": 31485600,
+	"time_unit": 3,
+	"n": 10,
+	"period": 1,
+	"expect": {
+	    "timestring": "31 Dec 1980 10:00:00 UTC",
+	    "seconds_since_epoch": 347104800
+	}
+    },
+    {
+	"comment": "If a period starts at 10:00:00 (am) UTC on 29 February, 2016",
+	"basetime": 1456740000,
+	"time_unit": 0,
+	"n": 1,
+	"period": 1,
+	"expect": {
+	    "timestring": "29 Feb 2016 10:00:01 UTC",
+	    "seconds_since_epoch": 1456740001
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 0,
+	"n": 10,
+	"period": 1,
+	"expect": {
+	    "timestring": "29 Feb 2016 10:00:10 UTC",
+	    "seconds_since_epoch": 1456740010
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 0,
+	"n": 100,
+	"period": 1,
+	"expect": {
+	    "timestring": "29 Feb 2016 10:01:40 UTC",
+	    "seconds_since_epoch": 1456740100
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 0,
+	"n": 1000,
+	"period": 1,
+	"expect": {
+	    "timestring": "29 Feb 2016 10:16:40 UTC",
+	    "seconds_since_epoch": 1456741000
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 1,
+	"n": 1,
+	"period": 1,
+	"expect": {
+	    "timestring": "1 Mar 2016 10:00:00 UTC",
+	    "seconds_since_epoch": 1456826400
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 1,
+	"n": 10,
+	"period": 1,
+	"expect": {
+	    "timestring": "10 Mar 2016 10:00:00 UTC",
+	    "seconds_since_epoch": 1457604000
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 1,
+	"n": 100,
+	"period": 1,
+	"expect": {
+	    "timestring": "08 Jun 2016 10:00:00 UTC",
+	    "seconds_since_epoch": 1465380000
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 1,
+	"n": 1000,
+	"period": 1,
+	"expect": {
+	    "timestring": "25 Nov 2018 10:00:00 UTC",
+	    "seconds_since_epoch": 1543140000
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 2,
+	"n": 1,
+	"period": 1,
+	"expect": {
+	    "timestring": "29 Mar 2016 10:00:00 UTC",
+	    "seconds_since_epoch": 1459245600
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 2,
+	"n": 10,
+	"period": 1,
+	"expect": {
+	    "timestring": "29 Dec 2016 10:00:00 UTC",
+	    "seconds_since_epoch": 1483005600
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 2,
+	"n": 100,
+	"period": 1,
+	"expect": {
+	    "timestring": "29 Jun 2024 10:00:00 UTC",
+	    "seconds_since_epoch": 1719655200
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 3,
+	"n": 1,
+	"period": 1,
+	"expect": {
+	    "timestring": "28 Feb 2017 10:00:00 UTC",
+	    "seconds_since_epoch": 1488276000
+	}
+    },
+    {
+	"basetime": 1456740000,
+	"time_unit": 3,
+	"n": 10,
+	"period": 1,
+	"expect": {
+	    "timestring": "28 Feb 2026 10:00:00 UTC",
+	    "seconds_since_epoch": 1772272800
+	}
+    }
+]

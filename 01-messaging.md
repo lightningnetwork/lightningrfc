@@ -49,7 +49,7 @@ The messages are grouped logically into five groups, ordered by the most signifi
   - Setup & Control (types `0`-`31`): messages related to connection setup, control, supported features, and error reporting (described below)
   - Channel (types `32`-`127`): messages used to setup and tear down micropayment channels (described in [BOLT #2](02-peer-protocol.md))
   - Commitment (types `128`-`255`): messages related to updating the current commitment transaction, which includes adding, revoking, and settling HTLCs as well as updating fees and exchanging signatures (described in [BOLT #2](02-peer-protocol.md))
-  - Routing (types `256`-`511`): messages containing node and channel announcements, as well as any active route exploration (described in [BOLT #7](07-routing-gossip.md))
+  - Routing (types `256`-`511`): messages containing node and channel announcements, as well as any active route exploration or messaging (described in [BOLT #7](07-routing-gossip.md))
   - Custom (types `32768`-`65535`): experimental and application-specific messages
 
 The size of the message is required by the transport layer to fit into a 2-byte unsigned int; therefore, the maximum possible size is 65535 bytes.
@@ -231,9 +231,11 @@ The following convenience types are also defined:
 * `channel_id`: a 32-byte channel_id (see [BOLT #2](02-peer-protocol.md#definition-of-channel-id))
 * `sha256`: a 32-byte SHA2-256 hash
 * `signature`: a 64-byte bitcoin Elliptic Curve signature
+* `bip340sig`: a 64-byte bitcoin Elliptic Curve Schnorr signature as per [BIP-340](https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki)
 * `point`: a 33-byte Elliptic Curve point (compressed encoding as per [SEC 1 standard](http://www.secg.org/sec1-v2.pdf#subsubsection.2.3.3))
 * `short_channel_id`: an 8 byte value identifying a channel (see [BOLT #7](07-routing-gossip.md#definition-of-short-channel-id))
 * `bigsize`: a variable-length, unsigned integer similar to Bitcoin's CompactSize encoding, but big-endian.  Described in [BigSize](#appendix-a-bigsize-test-vectors).
+* `utf8`: a byte as part of a UTF-8 string.  A writer MUST ensure an array of these is a valid UTF-8 string, a reader MAY reject any messages containing an array of these which is not a valid UTF-8 string.
 
 ## Setup Messages
 

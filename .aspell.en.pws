@@ -387,3 +387,13 @@ CHECKSIGVERIFY
 IFDUP
 sats
 anysegwit
+onionmsg
+Schnorr
+unblinded
+Merkle
+whitespace
+rata
+programatically
+parsable
+TLVs
+AUD
