@@ -20,6 +20,7 @@ All data fields are unsigned big-endian unless otherwise specified.
     * [The `error` Message](#the-error-message)
   * [Control Messages](#control-messages)
     * [The `ping` and `pong` Messages](#the-ping-and-pong-messages)
+  * [Node Backup Storage](#node-backup-storage)
   * [Appendix A: BigSize Test Vectors](#appendix-a-bigsize-test-vectors)
   * [Appendix B: Type-Length-Value Test Vectors](#appendix-b-type-length-value-test-vectors)
   * [Appendix C: Message Extension](#appendix-c-message-extension)
@@ -258,9 +259,14 @@ The `features` field MUST be padded to bytes with 0s.
     1. type: 1 (`networks`)
     2. data:
         * [`...*chain_hash`:`chains`]
-
+    1. type: 2 (`node_backup`)
+    2. data:
+        * [`...*byte`:`backup_data`]
 
 The optional `networks` indicates the chains the node is interested in.
+
+The `node_backup` contains the last backup our peer sent us, as described in
+the [Node Backup Storage](#node-backup-storage) section.
 
 #### Requirements
 
@@ -442,6 +448,65 @@ every message maximally).
 
 Finally, the usage of periodic `ping` messages serves to promote frequent key
 rotations as specified within [BOLT #8](08-transport.md).
+
+## Node Backup Storage
+
+Nodes that advertise the `provide_peer_backup_storage` feature offer storing
+arbitrary data for their peers. The data stored must not exceed 32000 bytes,
+which lets it fit in existing lightning messages (e.g. a `commitment_signed`
+message with 483 htlc signatures).
+
+Nodes that advertize the `want_peer_backup_storage` feature want to have their
+data stored by their peers that support `provide_peer_backup_storage`.
+
+Nodes can verify that their `provide_peer_backup_storage` peers correctly store
+their backup data at each reconnection, by comparing the contents of the
+retrieved backups with the last one they sent.
+
+Note that it's not possible for _both_ peers to store each other's backups;
+whenever one loses data it would force the other to close channels, which is
+undesirable. In practice, this means that a node cannot set both
+`want_peer_backup_storage` and `provide_peer_backup_storage`.
+
+There are two types of backups:
+  - `node_backup`, described in this section
+  - `channel_backup`, described in [Bolt #2](02-peer-protocol.md#channel-backup-storage)
+
+Nodes ask their peers to store data using the `update_backup` message:
+
+1. type: 20 (`update_backup`)
+2. data:
+   * [`bigsize`: `length`]
+   * [`length*byte`:`node_backup`]
+
+A node with `want_peer_backup_storage` activated:
+  - MUST NOT activate `provide_peer_backup_storage`
+  - if its peer doesn't support `provide_peer_backup_storage`:
+    - MUST NOT send `update_backup`
+  - otherwise:
+    - MAY send `update_backup` whenever necessary
+    - MUST limit its `node_backup` to 32000 bytes
+    - when it receives `init` with an outdated or missing `node_backup`:
+      - SHOULD send a warning
+      - MAY disconnect
+      - MAY fail all channels with that peer
+
+A node with `provide_peer_backup_storage` activated:
+  - MUST NOT activate `want_peer_backup_storage`
+  - when it receives `update_backup`:
+    - if its peer also has activated the `provide_peer_backup_storage` feature:
+      - SHOULD send a warning
+      - MUST NOT store this backup data
+    - otherwise:
+      - if the `node_backup` exceeds 32000 bytes:
+        - SHOULD send a warning
+        - MUST NOT store this backup data
+      - otherwise:
+        - MUST store this backup data
+  - when it sends `init`:
+    - MUST include the last `node_backup` it received from that peer
+  - when all channels with that peer are closed:
+    - SHOULD wait at least 2016 blocks before deleting the `node_backup`
 
 ## Appendix A: BigSize Test Vectors
 
